@@ -21,7 +21,7 @@ await connectCloudinary()
 
 
 //Origin Allowed  //req from these origin can get response from the server
-const allowedOrigin=['http://localhost:5173']
+const allowedOrigin=['http://localhost:5173',"https://green-cart-nine-rho.vercel.app"]
 
 app.post('/stripe',express.raw({type:'application/json'}), stripeWebHooks)
 

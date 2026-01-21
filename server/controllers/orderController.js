@@ -98,6 +98,7 @@ export const placeOrderStripe=async (req,res)=>{
 
 // Stripe Web Hooks to verify payment  Action :/stripe
 export const stripeWebHooks=async (request,response)=>  {
+    console.log("🔥 STRIPE WEBHOOK HIT");
     // Stripe Gateway Initialize
     const stripeInstance=new stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -105,14 +106,14 @@ export const stripeWebHooks=async (request,response)=>  {
     let event;
     try {
         event =stripeInstance.webhooks.constructEvent(
-            req.body,
+            request.body,
             signature,
             process.env.STRIPE_WEBHOOK_SECRET
         )
     } catch (error) {
-        res.json(400).send(`WebHook Error: ${error.message}`)
+        response.json(400).send(`WebHook Error: ${error.message}`)
     }
-
+    console.log("EVENT HIT",event)
     // Handle the event (in try block there)
     switch (event.type) {
         case "payment_intent.succeeded":{
@@ -147,8 +148,39 @@ export const stripeWebHooks=async (request,response)=>  {
             console.log(`Uhandled Event Type ${event.type}`)
             break;
     }
-    response.json({recieved:true})
+    response.status(200).json({recieved:true})
 }
+//     export const stripeWebHooks = async (request, response) => {
+//         console.log("🔥 STRIPE WEBHOOK HIT");
+
+//   const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
+//   const signature = request.headers["stripe-signature"];
+
+//   let event;
+
+//   try {
+//     event = stripeInstance.webhooks.constructEvent(
+//       request.body,
+//       signature,
+//       process.env.STRIPE_WEBHOOK_SECRET
+//     );
+//   } catch (error) {
+//     return response.status(400).send(`Webhook Error: ${error.message}`);
+//   }
+//   console.log("Event:", event.type);
+//   // ✅ ONLY THIS EVENT
+//   if (event.type === "checkout.session.completed") {
+//     const session = event.data.object;
+
+//     const { orderId, userId } = session.metadata;
+
+//     await Order.findByIdAndUpdate(orderId, { isPaid: true });
+//     await User.findByIdAndUpdate(userId, { cartItems: {} });
+//   }
+
+//   response.status(200).json({ received: true });
+// };
+
 
 
 //Get Orders by UserId  : /api/order/user
