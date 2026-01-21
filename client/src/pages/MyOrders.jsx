@@ -1,19 +1,30 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets, dummyOrders } from '../assets/assets'
+import toast from 'react-hot-toast'
 
 const MyOrders = () => {
 
-    const [myOrder,setMyOrders]=useState([])
-    const {currency} =useAppContext()
+    const [myOrders,setMyOrders]=useState([])
+    const {currency,axios,user} =useAppContext()
 
     const fetchMyOrders=async ()=>{
-        setMyOrders(dummyOrders)
+        try {
+            const {data}=await axios.get("/api/orders/user")
+            if(data.success){
+                setMyOrders(data.orders)
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
+        }
     }
 
     useEffect(()=>{
+        if(user){
         fetchMyOrders()
-    },[])
+        }
+    },[user])
 
   return (
     <div className='mt-16 pb-20 border border-b-blue-950'>
@@ -22,7 +33,7 @@ const MyOrders = () => {
             <div className='w-16 h-0.5 bg-primary '></div>
         </div>
 
-        {myOrder.map((order,index)=>(
+        {myOrders.map((order,index)=>(
             <div key={index} className='border border-gray-300 rounded-lg mb-10 p-4 py-5 max-w-4xl' >
                 <p className='flex justify-between md:items-center text-gray-400 md:font-medium max-md:flex-col'>
                     <span>OrderId : {order._id}</span>
@@ -36,7 +47,7 @@ const MyOrders = () => {
                      border-gray-300 flex flex-col md:flex-row md:items-center justify-between p-4 py-5 md:gap-16 w-full max-w-4xl`}>
                         <div className='flex items-center mb-4 md:mb-0'>
                             <div className='bg-primary/10 p-4 rounded-lg'>
-                                <img src={item.product.image[0]} alt="" className='w-16 h-16'  />
+                                <img src={item.product.images[0]} alt="" className='w-16 h-16'  />
                             </div>
                             <div className='ml-4'>
                                 <h2 className='text-xl font-medium text-gray-800 '>{item.product.name}</h2>

@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { assets } from '../assets/assets'
 import { Form } from 'react-router-dom'
+import { useAppContext } from '../context/AppContext'
+import toast from 'react-hot-toast'
 
 //Input Field Component
 
@@ -16,6 +18,8 @@ const InputField=({type,placeholder,name,handleChange,address})=>(
 )
 
 const AddAddress = () => {
+    const {axios,user,navigate}=useAppContext()
+    
     const [address,setAddress]=useState({
     userId: "",
     firstName: "",
@@ -30,6 +34,7 @@ const AddAddress = () => {
     })
 
     const handleChange=(e)=>{
+        //this will work for every input field be like city,state,name,phen,email,state
         const {name,value}=e.target;
         setAddress((prevAddress)=>({
             ...prevAddress,
@@ -37,7 +42,26 @@ const AddAddress = () => {
         }))
 
     }
-    const onSubmitHandler=async (e)=>{e.preventDefault()}
+    const onSubmitHandler=async (e)=>{
+        e.preventDefault();
+        try {
+            // console.log("iN address component",address)
+            const {data}=await axios.post("/api/address/add",{address})
+            if(data.success){
+                toast.success(data.message)
+                navigate('/cart')
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+    useEffect(()=>{
+        if(!user){
+            navigate('/cart')
+        }
+    },[])
   return (
     <div className='mt-16 pb-16'>
         <p className='text-2xl md:text-3xl text-gray-500'>Add Shipping <span className='text-primary font-semibold'>Address</span></p>

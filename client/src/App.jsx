@@ -17,12 +17,13 @@ import SellerLayout from './pages/seller/SellerLayout';
 import AddProducts from './pages/seller/AddProducts';
 import ProductList from './pages/seller/ProductList';
 import Orders from './pages/seller/Orders';
+import Loading from './components/Loading';
 
 
 const App=()=>{
   const isSellerPath=useLocation().pathname.includes("seller")
   const {showUserLogin,isSeller}=useAppContext()
-  console.log('showUserLogin',showUserLogin)
+  // console.log('showUserLogin',showUserLogin)
   return(
     <div className='text-default min-h-screen text-gray-700 bg-white'>
 
@@ -39,12 +40,12 @@ const App=()=>{
           <Route path="/cart" element={<Cart/>}/>
           <Route path="/add-address" element={<AddAddress/>}/>
           <Route path="/my-orders" element={<MyOrders/>}/>
+          <Route path="/loader" element={<Loading/>}/>
           <Route path="/seller" element={isSeller ? <SellerLayout/> : <SellerLogin/>} >
               {/* Below are child routes of /seller and all are e.g /seller/product-list & /seller/orders */}
               <Route index element={isSeller ? <AddProducts/> : null}/> {/*only this index will be show when it is /seller shows by default */}
               <Route path='product-list' element={<ProductList/>}/>
               <Route path='orders' element={<Orders/>}/>
-
           </Route> 
 
           

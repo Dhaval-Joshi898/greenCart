@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets, dummyAddress } from "../assets/assets";
+import toast from "react-hot-toast";
 
 const Cart = () => {
   const {
@@ -12,13 +13,16 @@ const Cart = () => {
     updateCartItem,
     navigate,
     getCartAmount,
+    axios,
+    user,
+    setCartItems,
   } = useAppContext();
 
   const [cartArray, setCartArray] = useState([]);
-  const [addresses, setAddresses] = useState(dummyAddress);
-  const [selectedAddresses, setSelectedAddresses] = useState(dummyAddress[0]);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddress, setShowAddress] = useState(false);
-  const [paymentOption, setPaymentOption] = useState("Cash On Delivery");
+  const [paymentOption, setPaymentOption] = useState("COD");
 
   const getCart = () => {
     const tempArray = [];
@@ -30,12 +34,75 @@ const Cart = () => {
     setCartArray(tempArray);
   };
 
-  const placeOrder = async () => {};
+  const getUserAddresses = async () => {
+    try {
+      const { data } = await axios.get("/api/address/get");
+      if (data.success) {
+        setAddresses(data.addresses); //addressses from backend is array
+        if (data.addresses.length > 0) {
+          setSelectedAddress(data.addresses[0]);
+        }
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const placeOrder = async () => {
+    try {
+      if (!selectedAddress) return toast.error("Please Select an Address");
+      //Place order with COD
+      if (paymentOption === "COD") {
+        const { data } = await axios.post("/api/orders/cod", {
+          items: cartArray.map((item) => ({
+            product: item._id,
+            quantity: item.quantity,
+          })),
+          address: selectedAddress._id,
+        });
+        if (data.success) {
+          toast.success(data.message);
+          setCartItems({});
+          navigate("/my-orders");
+        } else {
+          console.log("ERROR in cart checkout",data)
+          toast.error(data.message);
+        }
+      }
+      else{
+        //Place order with Stripe
+        const { data } = await axios.post("/api/orders/stripe", {
+          items: cartArray.map((item) => ({
+            product: item._id,
+            quantity: item.quantity,
+          })),
+          address: selectedAddress._id,
+        });
+        if (data.success) {
+           window.location.replace(data.url)
+        } else {
+          toast.error(data.message);
+        }
+      }
+    }
+     catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   useEffect(() => {
     if (products.length > 0 && cartItems) {
       getCart();
     }
   }, [products, cartItems]); //whenever these two it will execute
+
+  useEffect(() => {
+    if (user) {
+      getUserAddresses();
+    }
+  }, [user]);
 
   return products.length > 0 && cartItems ? (
     <div className="flex flex-col md:flex-row mt-16">
@@ -60,7 +127,7 @@ const Cart = () => {
               <div
                 onClick={() => {
                   navigate(
-                    `/products/${product.category.toLowerCase()}/${product._id}`
+                    `/products/${product.category.toLowerCase()}/${product._id}`,
                   );
                   scrollTo(0, 0);
                 }}
@@ -68,7 +135,7 @@ const Cart = () => {
               >
                 <img
                   className="max-w-full h-full object-cover"
-                  src={product.image}
+                  src={product.images[0]}
                   alt={product.name}
                 />
               </div>
@@ -89,7 +156,7 @@ const Cart = () => {
                       className="outline-none"
                     >
                       {Array(
-                        cartItems[product._id] > 9 ? cartItems[product._id] : 9
+                        cartItems[product._id] > 9 ? cartItems[product._id] : 9,
                       )
                         .fill("")
                         .map((_, index) => (
@@ -164,9 +231,9 @@ const Cart = () => {
           <p className="text-sm font-medium uppercase">Delivery Address</p>
           <div className="relative flex justify-between items-start mt-2">
             <p className="text-gray-500">
-              {selectedAddresses
-                ? `${selectedAddresses.street},${selectedAddresses.city},${selectedAddresses.state},${selectedAddresses.country}`
-                : "No address found<"}
+              {selectedAddress
+                ? `${selectedAddress.street},${selectedAddress.city},${selectedAddress.state},${selectedAddress.country}`
+                : "No address found"}
             </p>
             <button
               onClick={() => setShowAddress(!showAddress)}
@@ -179,7 +246,7 @@ const Cart = () => {
                 {addresses.map((address, index) => (
                   <p
                     onClick={() => {
-                      setSelectedAddresses(address);
+                      setSelectedAddress(address);
                       setShowAddress(false);
                     }}
                     className="text-gray-500 p-2 hover:bg-gray-100"
@@ -224,22 +291,22 @@ const Cart = () => {
           </p> */}
           <p className="flex justify-between">
             <span>Delivery Fee</span>
-            <span>{currency}20</span>
+            <span>{currency}{(getCartAmount() * 0.02).toFixed(2)}</span>  {/*2% tax  */}
           </p>
           <p className="flex justify-between text-lg font-medium mt-3">
             <span>Total Amount:</span>
             <span>
               {currency}
-              {getCartAmount() + 20}
+              {(getCartAmount() +(getCartAmount() * 0.02)).toFixed(2)}
             </span>
           </p>
         </div>
 
         <button
-          onClick={() => placeOrder}
+          onClick={() => placeOrder()}
           className="w-full py-3 mt-6 cursor-pointer bg-primary text-white font-medium hover:bg-primary-dull transition"
         >
-          {paymentOption === "COD" ? "Place Order" : "Proceed to Check    out"}
+          {paymentOption === "COD" ? "Place Order" : "Proceed to Checkout"}
         </button>
       </div>
     </div>

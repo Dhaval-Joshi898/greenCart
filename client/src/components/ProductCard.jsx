@@ -6,9 +6,9 @@ const ProductCard = ({ product }) => {
   const [count, setCount] = useState(0);
   const { currency, addToCart, removeFromCart, cartItems, navigate } =
     useAppContext();
-  {
-    console.log("ProductCard.jsx", product);
-  }
+  // {
+  //   console.log("ProductCard.jsx", product);
+  // }
 
   return (
     product && (
@@ -16,7 +16,7 @@ const ProductCard = ({ product }) => {
         <div className="group cursor-pointer flex items-center justify-center px-2">
           <img
             className="group-hover:scale-105 transition max-w-26 md:max-w-36"
-            src={product.image[0]}
+            src={product.images[0]}
             alt={product.name}
           />
         </div>
